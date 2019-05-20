@@ -1,0 +1,30 @@
+#side-nav {
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 20vw;
+	height: 100vh;
+	background-color: #FF7F11;
+	color: #fff;
+	text-align: center;
+}
+
+#room-nav {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	flex-direction: column;
+}
+.room-button {
+	border: none;
+	background-color: #FF3F00;
+	color: white;
+	padding: 15px 32px;
+	width: 60%;
+	font-size: 17px;
+	text-align: center;
+	text-decoration: none;
+	display: inline-block;
+	margin-bottom: 10px;
+	cursor: pointer;
+}
