@@ -10,6 +10,8 @@ import { Sensor } from '../sensor';
 
 import { Chart } from 'chart.js';
 
+import io from "socket.io-client";
+
 @Component({
   selector: 'app-room',
   templateUrl: './room.component.html',
@@ -19,6 +21,10 @@ export class RoomComponent implements OnInit {
 	// id: Observable<number>;
 	id: number;
 	temperature: Sensor[];
+
+	private socket: any;
+
+	test_id: number = 0;
 
 	temperature_labels: string[] = [];
 	temperature_data: number[] = [];
@@ -34,10 +40,19 @@ export class RoomComponent implements OnInit {
   	private roomService: RoomService) { }
 
   ngOnInit() {
+  	this.socket = io('http://localhost:5000')
   	this.getRoom();
   	this.getTemperature(this.id)
   	this.getHumidity(this.id)
   	this.getLuminosity(this.id)
+  }
+
+  public ngAfterViewInit() {
+  	this.socket.on("get_data", data_new => {
+  		console.log(data_new)
+  		this.socket.emit('message', 'WORKING BITCHESSSSSSSSSS');
+  		this.test_id = data_new.value;
+  	});
   }
 
   getRoom(): void {
