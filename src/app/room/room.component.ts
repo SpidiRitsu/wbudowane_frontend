@@ -17,84 +17,84 @@ import io from "socket.io-client";
   templateUrl: './room.component.html',
   styleUrls: ['./room.component.css']
 })
+
 export class RoomComponent implements OnInit {
-	// id: Observable<number>;
 	id: number;
 	temperature: Sensor[];
 
 	private socket: any;
 
-	test_id: number = 0;
-
-	temperature_labels: string[] = [];
-	temperature_data: number[] = [];
-
-	humidity_labels: string[] = [];
-	humidity_data: number[] = [];
-
-	luminosity_labels: string[] = [];
-	luminosity_data: number[] = [];
+	charts: any;
 
   constructor(
   	private route: ActivatedRoute,
   	private roomService: RoomService) { }
 
   ngOnInit() {
-  	this.socket = io('http://localhost:5000')
-  	this.getRoom();
-  	this.getTemperature(this.id)
-  	this.getHumidity(this.id)
-  	this.getLuminosity(this.id)
-  }
-
-  public ngAfterViewInit() {
-  	this.socket.on("get_data", data_new => {
-  		console.log(data_new)
-  		this.socket.emit('message', 'WORKING BITCHESSSSSSSSSS');
-  		this.test_id = data_new.value;
-  	});
-  }
-
-  getRoom(): void {
   	this.route.params.subscribe(params => {
   		this.id = params.id as number;
+  		for (let key in this.charts) {
+  			if (this.charts.hasOwnProperty(key)) {
+  				if (this.charts[key].chart) {
+  					this.charts[key].chart.destroy()
+  					console.log('DESTROYED CHART: ' + key)
+  				}
+  			}
+  		}
+  		this.charts = {
+				temperature: {
+					chart: null,
+					labels: [],
+					data: []
+				},
+				humidity: {
+					chart: null,
+					labels: [],
+					data: []
+				},
+				luminosity: {
+					chart: null,
+					labels: [],
+					data: []
+				}
+			}
+  		if (this.socket)
+  			this.socket.disconnect();
+  		this.socket = io('http://localhost:5000', {query: "id=" + this.id});
+  		console.log('ROOM ID: ' + this.id);
+  		this.drawCharts();
   	})
   }
 
-  getTemperature(id: number): void {
-  	this.roomService.getTemperature(id)
-  		.subscribe(temp => {
-  			this.temperature_labels = temp['date'];
-  			this.temperature_data = temp['value'];
-  			this.drawCharts();
-  		});
-  }
-
-  getHumidity(id: number): void {
-  	this.roomService.getHumidity(id)
-  		.subscribe(temp => {
-  			this.humidity_labels = temp['date'];
-  			this.humidity_data = temp['value'];
-  			this.drawCharts();
-  		});
-  }
-
-  getLuminosity(id: number): void {
-  	this.roomService.getTemperature(id)
-  		.subscribe(temp => {
-  			this.luminosity_labels = temp['date'];
-  			this.luminosity_data = temp['value'];
-  			this.drawCharts();
-  		});
+  ngAfterViewInit() {
+  	this.route.params.subscribe(params => {
+	  	this.socket.on("get_data", data => {
+	  		console.log(data)
+	  		let tables = {
+	  			"T": this.charts.temperature,
+	  			"H": this.charts.humidity,
+	  			"L": this.charts.luminosity
+	  		}
+	  		for (data of data.data) {
+	  			if (data.id == this.id) {
+		  			tables[data.name].labels.push(...data.labels);
+		  			tables[data.name].data.push(...data.data);
+		  			tables[data.name].chart.data.labels = tables[data.name].labels;
+		  			tables[data.name].chart.data.datasets[0].data = tables[data.name].data;
+		  			tables[data.name].chart.update();	  				
+	  			}
+	  		}
+	  	});
+	  });
   }
 
   drawCharts(): void {
-		new Chart(document.getElementById("c1"), {
+		this.charts.temperature.chart = new Chart(document.getElementById("c1"), {
 			type: "line",
 			data: {
-				labels: this.temperature_labels,
+				labels: [],
 				datasets: [{
-					data: this.temperature_data,
+					data: [],
 					label: "Temperatura",
 					borderColor: "#e50606",
 					backgroundColor: "#e50606",
@@ -108,13 +108,13 @@ export class RoomComponent implements OnInit {
 				// }
 			}
 		});
-		new Chart(document.getElementById("c2"), {
+		this.charts.humidity.chart = new Chart(document.getElementById("c2"), {
 			type: "line",
 			data: {
-				labels: this.humidity_labels,
+				labels: [],
 				datasets: [{
 					// data: [22, 50, 75, 80, 95, 100, 116, 105, 95, 79],
-					data: this.humidity_data,
+					data: [],
 					label: "Wilgotność",
 					borderColor: "#2aa4ea",
 					backgroundColor: "#2aa4ea",
@@ -128,13 +128,13 @@ export class RoomComponent implements OnInit {
 				// }
 			}
 		});
-		new Chart(document.getElementById("c3"), {
+		this.charts.luminosity.chart = new Chart(document.getElementById("c3"), {
 			type: "line",
 			data: {
-				labels: this.luminosity_labels,
+				labels: [],
 				datasets: [{
 					// data: [22, 50, 75, 80, 95, 100, 116, 105, 95, 79],
-					data: this.luminosity_data,
+					data: [],
 					label: "Natężenie światła",
 					borderColor: "#fffc4c",
 					backgroundColor: "#fffc4c",
