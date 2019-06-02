@@ -237,7 +237,7 @@ export class RoomComponent implements OnInit {
 					console.log('rgb_feedback')
 					console.log(data);
 
-					this.changeRGBState(data.red, data.green, data.blue);
+					this.changeRGBState(data.red, data.green, data.blue, true);
 				}
 			});
 
@@ -253,7 +253,7 @@ export class RoomComponent implements OnInit {
 	  });
   }
 
-  changeRGBState(red: number, green: number, blue: number) {
+  changeRGBState(red: number, green: number, blue: number, force: boolean = false) {
   	console.log(`CHANGE_RGB: ${red} ${green} ${blue}`)
   	let color_input = document.querySelector("#rgb-strip") as HTMLInputElement;
   	if (color_input) {
@@ -268,10 +268,14 @@ export class RoomComponent implements OnInit {
 			}).join('')
 
 			let rgb = hexToRgb(color_input.value)
-			if (rgb[0] != red || rgb[1] != green || rgb[2] != blue) {
+  		let new_color = rgbToHex(+red, +green, +blue)
+			if ((rgb[0] != red || rgb[1] != green || rgb[2] != blue) ||
+				force) {
 				this.rgb_onchange = false;
-  			console.log(`New strip value: ${rgbToHex(red, green, blue)}`)
-  			color_input.value = rgbToHex(red, green, blue);
+  			console.log(`New strip value:`)
+  			console.log(red, green, blue)
+  			console.log(new_color)
+  			color_input.value = new_color;
 			}
   		this.rgb_onchange = true;
   	}
