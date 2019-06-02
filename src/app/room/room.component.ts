@@ -20,14 +20,19 @@ import io from "socket.io-client";
 
 export class RoomComponent implements OnInit {
 	id: number;
+	meteo = 'o';
 	temperature: Sensor[];
 
 	private socket: any;
 
 	charts: any;
 
-	feedback: boolean[] = [false, false, false];
+	relay_feedback: boolean[] = [false, false, false];
+	rgb_feedback: boolean = false;
+	rgb_onchange: boolean = true;
 	feedback_time: number = 5000;
+
+	rgb_old: any[];
 
   constructor(
   	private route: ActivatedRoute,
@@ -88,21 +93,53 @@ export class RoomComponent implements OnInit {
 					labels: [],
 					data: []
 				},
+				pressure: {
+					chart: null,
+					labels: [],
+					data: []
+				},
+				uv: {
+					chart: null,
+					labels: [],
+					data: []
+				},
+				air25: {
+					chart: null,
+					labels: [],
+					data: []
+				},
+				air10: {
+					chart: null,
+					labels: [],
+					data: []
+				},
+				sky: {
+					chart: null,
+					labels: [],
+					data: []
+				},
+				rain: {
+					chart: null,
+					labels: [],
+					data: []
+				},
 			}
   		if (this.socket)
   			this.socket.disconnect();
   		this.socket = io('http://localhost:5000', {query: "id=" + this.id});
   		console.log('ROOM ID: ' + this.id);
-  		this.drawCharts();
-  		console.log('SETTING RELAYS TO 0 onInit')
-  		this.changeSwitchState(0, false)
-  		this.changeSwitchState(1, false)
-  		this.changeSwitchState(2, false)
   	})
   }
 
   ngAfterViewInit() {
   	this.route.params.subscribe(params => {
+			this.drawCharts();
+			console.log('SETTING RELAYS TO 0 onInit')
+			this.changeSwitchState(0, false)
+			this.changeSwitchState(1, false)
+			this.changeSwitchState(2, false)
+			this.changeRGBState(0, 0, 0,)
+
 	  	this.socket.on("get_data", data => {
 	  		console.log(data)
 	  		let tables = {
@@ -110,7 +147,13 @@ export class RoomComponent implements OnInit {
 	  			"H": this.charts.humidity,
 	  			"L": this.charts.luminosity,
 	  			"R": this.charts.relays,
-	  			"P": this.charts.pir
+	  			"P": this.charts.pir,
+	  			"K": this.charts.pressure,
+	  			"U": this.charts.uv,
+	  			"J": this.charts.air25,
+	  			"F": this.charts.air10,
+	  			"O": this.charts.sky,
+	  			"I": this.charts.rain
 	  		}
 	  		for (data of data.data) {
 	  			if (data.id == this.id) {
@@ -130,6 +173,14 @@ export class RoomComponent implements OnInit {
 		  					}
 		  				}
 		  			}
+		  			else if (data.name == 'S') {
+		  				console.log(data.data)
+		  				let last_row = data.data.slice(-1)[0]
+		  				console.log(last_row)
+							this.rgb_old = last_row;
+							if (last_row)
+		  					this.changeRGBState(last_row[0], last_row[1], last_row[2])
+		  			}
 		  			else {
 		  				if (data.labels && data.data) {
 			  				tables[data.name].labels = tables[data.name].labels.slice(data.labels.length)
@@ -145,18 +196,86 @@ export class RoomComponent implements OnInit {
 	  		}
 	  	});
 
-	  	this.socket.on("relay_feedback", data => {
-	  		if (data.id == this.id && this.feedback[data.relay]) {
-	  			console.log('relay_feedback')
-	  			let checkbox = document.querySelector("#checkbox" + data.relay);
-	  			let slider = document.querySelector("#slider" + data.relay);
+	  	let color_input = document.querySelector("#rgb-strip") as HTMLInputElement;
+	  	if (color_input) {
+				color_input.addEventListener('change', () => {
+					if (this.rgb_onchange) {
+						const hexToRgb = hex =>
+						  hex.replace(/^#?([a-f\d])([a-f\d])([a-f\d])$/i
+						             ,(m, r, g, b) => '#' + r + r + g + g + b + b)
+						    .substring(1).match(/.{2}/g)
+						    .map(x => parseInt(x, 16))
+						console.log(color_input.value)
+						let rgb = hexToRgb(color_input.value)
+						console.log(rgb)
+						let message = {
+							'id': this.id,
+							'message': `S${rgb[0]}R${rgb[1]}G${rgb[2]}B`
+						}
+						this.socket.emit('rgb', message)
+						let promise = new Promise((resolve, reject) => {
+							this.rgb_feedback = true;
+							this.rgb_onchange = false;
+							setTimeout(() => {
+								this.rgb_feedback = false;
+								console.log('RGB feedback time has lapsed!');
+								console.log(this.rgb_onchange);
+								if (!this.rgb_onchange) {
+									console.log('NO RESPONSE FROM RGB RIP')
+									console.log('RGB_OLD:')
+									console.log(this.rgb_old)
+									this.changeRGBState(this.rgb_old[0], this.rgb_old[1], this.rgb_old[2]);
+								}
+							}, this.feedback_time)
+						});
+					}
+				});	
+	  	}
 
+			this.socket.on('rgb_feedback', data => {
+				if (data.id == this.id && this.rgb_feedback) {
+					console.log('rgb_feedback')
+					console.log(data);
+
+					this.changeRGBState(data.red, data.green, data.blue);
+				}
+			});
+
+	  	this.socket.on("relay_feedback", data => {
+	  		if (data.id == this.id && this.relay_feedback[data.relay]) {
+	  			console.log('relay_feedback')
 	  			console.log(data);
 
+  				this.rgb_onchange = false;
 	  			this.changeSwitchState(data.relay);
 	  		}
 	  	});
 	  });
+  }
+
+  changeRGBState(red: number, green: number, blue: number) {
+  	console.log(`CHANGE_RGB: ${red} ${green} ${blue}`)
+  	let color_input = document.querySelector("#rgb-strip") as HTMLInputElement;
+  	if (color_input) {
+  		const hexToRgb = hex =>
+			  hex.replace(/^#?([a-f\d])([a-f\d])([a-f\d])$/i
+			             ,(m, r, g, b) => '#' + r + r + g + g + b + b)
+			    .substring(1).match(/.{2}/g)
+			    .map(x => parseInt(x, 16))
+			const rgbToHex = (r, g, b) => '#' + [r, g, b].map(x => {
+			  const hex = x.toString(16)
+			  return hex.length === 1 ? '0' + hex : hex
+			}).join('')
+
+			let rgb = hexToRgb(color_input.value)
+			if (rgb[0] != red || rgb[1] != green || rgb[2] != blue) {
+				this.rgb_onchange = false;
+  			console.log(`New strip value: ${rgbToHex(red, green, blue)}`)
+  			color_input.value = rgbToHex(red, green, blue);
+			}
+  		this.rgb_onchange = true;
+  	}
+
   }
 
   changeSwitchState(id: number, state: boolean = null): void {
@@ -164,25 +283,27 @@ export class RoomComponent implements OnInit {
   	let checkbox = document.querySelector("#checkbox" + id) as HTMLInputElement;
 		let slider = document.querySelector("#slider" + id) as HTMLInputElement;
 
-		if (state !== null) {
-			checkbox.checked = state;
-		}
-		else if (state === undefined) {
-			console.log('kek?')
-			checkbox.checked = false;
+		if (checkbox && slider) {
+			if (state !== null) {
+				checkbox.checked = state;
+			}
+			else if (state === undefined) {
+				checkbox.checked = false;
+			}			
+
+			if (checkbox.checked) {
+				if (!slider.classList.contains('slider-checked')) {
+					slider.classList.add('slider-checked');
+				}
+			}
+			else {
+				if (slider.classList.contains('slider-checked')) {
+					slider.classList.remove('slider-checked');
+				}
+			}
 		}
 
 
-		if (checkbox.checked) {
-			if (!slider.classList.contains('slider-checked')) {
-				slider.classList.add('slider-checked');
-			}
-		}
-		else {
-			if (slider.classList.contains('slider-checked')) {
-				slider.classList.remove('slider-checked');
-			}
-		}
   }
 
   toggleRelay(relay: number): void {
@@ -196,10 +317,10 @@ export class RoomComponent implements OnInit {
   	this.socket.emit('relay', message);
 
   	let promise = new Promise((resolve, reject) => {
-			this.feedback[relay] = true;
+			this.relay_feedback[relay] = true;
   		setTimeout(() => {
-				this.feedback[relay] = false;
-				console.log('Feedback time lapsed!')
+				this.relay_feedback[relay] = false;
+				console.log('Relay feedback time has lapsed!')
 				if ((checkbox.checked && !slider.classList.contains('slider-checked')) ||
 					(!checkbox.checked && slider.classList.contains('slider-checked'))) {
 					checkbox.checked = !checkbox.checked
@@ -324,6 +445,94 @@ export class RoomComponent implements OnInit {
 				datasets: [{
 					data: [],
 					label: "Stan przełącznika 3",
+					borderColor: "#4f41f4",
+					backgroundColor: "#4f41f4",
+					fill: false,
+					steppedLine: "middle"
+				}]
+			},
+			options:{ 
+	    scales: {
+	      yAxes: [{
+	        ticks: {
+	          stepSize: 1
+	        }
+	      }]
+	    }
+	  }
+		});
+		this.charts.pressure.chart = new Chart(document.getElementById("c8"), {
+			type: "line",
+			data: {
+				labels: [],
+				datasets: [{
+					data: [],
+					label: "Ciśnienie",
+					borderColor: "#e50606",
+					backgroundColor: "#e50606",
+					fill: false
+				}]			
+			}
+		});
+		this.charts.uv.chart = new Chart(document.getElementById("c9"), {
+			type: "line",
+			data: {
+				labels: [],
+				datasets: [{
+					data: [],
+					label: "UV",
+					borderColor: "#e50606",
+					backgroundColor: "#e50606",
+					fill: false
+				}]			
+			}
+		});
+		this.charts.air25.chart = new Chart(document.getElementById("c10"), {
+			type: "line",
+			data: {
+				labels: [],
+				datasets: [{
+					data: [],
+					label: "Air 25",
+					borderColor: "#e50606",
+					backgroundColor: "#e50606",
+					fill: false
+				}]			
+			}
+		});
+		this.charts.air10.chart = new Chart(document.getElementById("c11"), {
+			type: "line",
+			data: {
+				labels: [],
+				datasets: [{
+					data: [],
+					label: "Air 25",
+					borderColor: "#e50606",
+					backgroundColor: "#e50606",
+					fill: false
+				}]			
+			}
+		});
+		this.charts.sky.chart = new Chart(document.getElementById("c12"), {
+			type: "line",
+			data: {
+				labels: [],
+				datasets: [{
+					data: [],
+					label: "Sky",
+					borderColor: "#e50606",
+					backgroundColor: "#e50606",
+					fill: false
+				}]			
+			}
+		});
+		this.charts.rain.chart = new Chart(document.getElementById("c13"), {
+			type: "line",
+			data: {
+				labels: [],
+				datasets: [{
+					data: [],
+					label: "Deszcz",
 					borderColor: "#4f41f4",
 					backgroundColor: "#4f41f4",
 					fill: false,

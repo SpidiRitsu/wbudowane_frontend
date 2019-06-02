@@ -1,6 +1,7 @@
 <div id="room-display" class="main">
-	<h1 id="header">Pokój {{ id }}</h1>
-	<div class="row">
+	<h1 *ngIf="id == meteo" id="header">Stacja Pogodowa</h1>
+	<h1 *ngIf="id != meteo" id="header">Pokój {{ id }}</h1>
+	<div *ngIf="id != meteo" class="row">
 		<div class="switch-wrapper">
 			<div class="switch-name">Relay 1</div>
 			<label class="switch">
@@ -23,27 +24,23 @@
 			</label>
 		</div>
 	</div>
+	<div *ngIf="id != meteo" class="strip-container">
+		<div class="switch-name">RGB Strip</div>
+		<input id="rgb-strip" type="color" name="rgb-strip">
+	</div>
 	<div class="charts-container">
-		<div [ngClass]="this.charts.temperature.labels.length == 0 ? 'none' : ''" class="chart-container">
-			<canvas id="c1"></canvas>
-		</div>
-		<div [ngClass]="this.charts.humidity.labels.length == 0 ? 'none' : ''" class="chart-container">
-			<canvas id="c2"></canvas>
-		</div>
-		<div [ngClass]="this.charts.luminosity.labels.length == 0 ? 'none' : ''" class="chart-container">
-			<canvas id="c3"></canvas>
-		</div>
-		<div [ngClass]="this.charts.pir.labels.length == 0 ? 'none' : ''" class="chart-container">
-			<canvas id="c4"></canvas>
-		</div>
-		<div [ngClass]="this.charts.relays[0].labels.length == 0 ? 'none' : ''" class="chart-container">
-			<canvas id="c5"></canvas>
-		</div>	
-		<div [ngClass]="this.charts.relays[1].labels.length == 0 ? 'none' : ''" class="chart-container">
-			<canvas id="c6"></canvas>
-		</div>	
-		<div [ngClass]="this.charts.relays[2].labels.length == 0 ? 'none' : ''" class="chart-container">
-			<canvas id="c7"></canvas>
-		</div>	
+		<div [ngClass]="this.charts.temperature.labels.length == 0 ? 'none' : ''" class="chart-container"><canvas id="c1"></canvas></div>
+		<div [ngClass]="this.charts.humidity.labels.length == 0 ? 'none' : ''" class="chart-container"><canvas id="c2"></canvas></div>
+		<div [ngClass]="this.charts.luminosity.labels.length == 0 ? 'none' : ''" class="chart-container"><canvas id="c3"></canvas></div>
+		<div [ngClass]="this.charts.pir.labels.length == 0 ? 'none' : ''" class="chart-container"><canvas id="c4"></canvas></div>
+		<div [ngClass]="this.charts.relays[0].labels.length == 0 ? 'none' : ''" class="chart-container"><canvas id="c5"></canvas></div>	
+		<div [ngClass]="this.charts.relays[1].labels.length == 0 ? 'none' : ''" class="chart-container"><canvas id="c6"></canvas></div>	
+		<div [ngClass]="this.charts.relays[2].labels.length == 0 ? 'none' : ''" class="chart-container"><canvas id="c7"></canvas></div>	
+		<div [ngClass]="this.charts.pressure.labels.length == 0 ? 'none' : ''" class="chart-container"><canvas id="c8"></canvas></div>
+		<div [ngClass]="this.charts.uv.labels.length == 0 ? 'none' : ''" class="chart-container"><canvas id="c9"></canvas></div>
+		<div [ngClass]="this.charts.air25.labels.length == 0 ? 'none' : ''" class="chart-container"><canvas id="c10"></canvas></div>
+		<div [ngClass]="this.charts.air10.labels.length == 0 ? 'none' : ''" class="chart-container"><canvas id="c11"></canvas></div>
+		<div [ngClass]="this.charts.sky.labels.length == 0 ? 'none' : ''" class="chart-container"><canvas id="c12"></canvas></div>
+		<div [ngClass]="this.charts.rain.labels.length == 0 ? 'none' : ''" class="chart-container"><canvas id="c13"></canvas></div>
 	</div>
 </div>
