@@ -1,0 +1,19 @@
+.refresh-button {
+	border: none;
+	background-color: #FF3F00;
+	color: white;
+	padding: 15px 32px;
+	width: 60%;
+	font-size: 17px;
+	text-align: center;
+	text-decoration: none;
+	display: inline-block;
+	margin-bottom: 10px;
+	cursor: pointer;
+	margin-top: 30px;
+	border-radius: 34px;
+}
+
+iframe {
+	border: 3px solid #FF3F00;
+}

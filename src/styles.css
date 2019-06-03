@@ -175,7 +175,8 @@ input:checked + .slider:before {
 	width: 40vw;
 	margin-bottom: 30px;
 	border: 0;
-	background: #FF7F11;
+	/*background: #FF7F11;*/
+	background: #FF3F00;
 	/*border: 3px solid #FF7F11;*/
 	padding: 3px 10px;
 	border-radius: 34px;

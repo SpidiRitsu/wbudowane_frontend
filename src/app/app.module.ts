@@ -6,12 +6,14 @@ import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { DashboardComponent } from './dashboard/dashboard.component';
 import { RoomComponent } from './room/room.component';
+import { CameraComponent } from './camera/camera.component';
 
 @NgModule({
   declarations: [
     AppComponent,
     DashboardComponent,
-    RoomComponent
+    RoomComponent,
+    CameraComponent
   ],
   imports: [
     BrowserModule,

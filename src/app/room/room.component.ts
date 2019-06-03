@@ -333,6 +333,17 @@ export class RoomComponent implements OnInit {
   	});
   }
 
+  allRelays(state: boolean): void {
+  	console.log(`CHANGING STATE OF ALL RELAYS TO: ${state}`)
+  	for(let relay=0; relay<3; relay++) {
+  		let message = {
+	  		"id": this.id,
+	  		"message": `${relay}${+state}`
+	  	};
+	  	this.socket.emit('relay', message);
+  	}
+  }
+
   drawCharts(): void {
 		this.charts.temperature.chart = new Chart(document.getElementById("c1"), {
 			type: "line",
@@ -497,7 +508,7 @@ export class RoomComponent implements OnInit {
 				labels: [],
 				datasets: [{
 					data: [],
-					label: "Air 25",
+					label: "PM2.5",
 					borderColor: "#e50606",
 					backgroundColor: "#e50606",
 					fill: false
@@ -510,7 +521,7 @@ export class RoomComponent implements OnInit {
 				labels: [],
 				datasets: [{
 					data: [],
-					label: "Air 25",
+					label: "PM10",
 					borderColor: "#e50606",
 					backgroundColor: "#e50606",
 					fill: false
@@ -523,7 +534,7 @@ export class RoomComponent implements OnInit {
 				labels: [],
 				datasets: [{
 					data: [],
-					label: "Sky",
+					label: "Pirometr",
 					borderColor: "#e50606",
 					backgroundColor: "#e50606",
 					fill: false

@@ -3,6 +3,8 @@
 	<h1 *ngIf="id != meteo" id="header">Pokój {{ id }}</h1>
 	<div *ngIf="id != meteo" class="row">
 		<div class="switch-wrapper">
+			<div (click)="allRelays(true)" id="all-on" class="all-relays-button">Relays ON</div>
+			<div (click)="allRelays(false)" id="all-off" class="all-relays-button">Relays OFF</div>
 			<div class="switch-name">Relay 1</div>
 			<label class="switch">
 			  <input id="checkbox0" type="checkbox">
